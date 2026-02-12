@@ -178,6 +178,8 @@ async def handle_error(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Start the bot."""
+    import asyncio
+
     if not TELEGRAM_BOT_TOKEN:
         print("❌ ERROR: Set TELEGRAM_BOT_TOKEN in .env file!")
         print("   1. Talk to @BotFather on Telegram")
@@ -197,9 +199,19 @@ def main():
     app.add_handler(CommandHandler("price", price_command))
     app.add_error_handler(handle_error)
 
-    # Run
+    # Run with explicit event loop (fixes Python 3.14)
     print("✅ Bot is running! Send /flex <wallet> in your Telegram group.")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    async def run():
+        async with app:
+            await app.initialize()
+            await app.start()
+            await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+            # Keep running forever
+            while True:
+                await asyncio.sleep(3600)
+
+    asyncio.run(run())
 
 
 if __name__ == "__main__":
