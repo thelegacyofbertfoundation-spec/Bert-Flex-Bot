@@ -45,6 +45,9 @@ SOLANA_ADDR_RE = re.compile(r"^[1-9A-HJ-NP-Za-km-z]{32,44}$")
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /start command."""
+    message = update.effective_message
+    if not message:
+        return
     welcome = (
         f"🐶 <b>Welcome to the {TOKEN_TICKER} Flex Bot!</b>\n\n"
         f"Show off your <b>{TOKEN_NAME}</b> bag with a custom cyberpunk flex card.\n\n"
@@ -53,16 +56,19 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"  /price — Quick price check\n\n"
         f"<i>Paste your Solana wallet address to flex on the timeline.</i> 💎"
     )
-    await update.message.reply_text(welcome, parse_mode="HTML")
+    await message.reply_text(welcome, parse_mode="HTML")
 
 
 async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /price command."""
-    await update.message.reply_text(f"⏳ Fetching {TOKEN_TICKER} price...")
+    message = update.effective_message
+    if not message:
+        return
+    await message.reply_text(f"⏳ Fetching {TOKEN_TICKER} price...")
 
     price_data = await get_token_price()
     if not price_data:
-        await update.message.reply_text("❌ Couldn't fetch price data. Try again later.")
+        await message.reply_text("❌ Couldn't fetch price data. Try again later.")
         return
 
     change = price_data["price_change_24h"]
@@ -82,16 +88,21 @@ async def price_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"📈 24h Vol: <b>{vol_str}</b>\n\n"
         f"<i>/flex &lt;wallet&gt; to show off your bag!</i>"
     )
-    await update.message.reply_text(msg, parse_mode="HTML")
+    await message.reply_text(msg, parse_mode="HTML")
 
 
 async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /flex <wallet_address> command."""
     import time
 
+    # Handle edited messages — use effective_message
+    message = update.effective_message
+    if not message:
+        return
+
     # Parse wallet address from args
     if not context.args or len(context.args) < 1:
-        await update.message.reply_text(
+        await message.reply_text(
             f"🐶 <b>How to flex:</b>\n\n"
             f"<code>/flex YourSolanaWalletAddress</code>\n\n"
             f"Paste your Solana wallet address after /flex to generate your {TOKEN_TICKER} flex card!",
@@ -103,7 +114,7 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Validate address format
     if not SOLANA_ADDR_RE.match(wallet):
-        await update.message.reply_text(
+        await message.reply_text(
             "❌ That doesn't look like a valid Solana wallet address.\n"
             "It should be 32-44 characters of base58 (letters and numbers, no 0/O/I/l)."
         )
@@ -113,12 +124,12 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     now = time.time()
     if wallet in _rate_limit and now - _rate_limit[wallet] < RATE_LIMIT_SECONDS:
         remaining = int(RATE_LIMIT_SECONDS - (now - _rate_limit[wallet]))
-        await update.message.reply_text(f"⏳ Cooldown! Try again in {remaining}s.")
+        await message.reply_text(f"⏳ Cooldown! Try again in {remaining}s.")
         return
     _rate_limit[wallet] = now
 
     # Send "generating" message
-    status_msg = await update.message.reply_text(
+    status_msg = await message.reply_text(
         f"⚡ Generating {TOKEN_TICKER} flex card...\n"
         f"<i>Scanning wallet on Solana...</i>",
         parse_mode="HTML",
@@ -157,7 +168,7 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await status_msg.delete()
 
         # Send the flex card
-        await update.message.reply_photo(
+        await message.reply_photo(
             photo=InputFile(card_image, filename="bert_flex_card.png"),
             caption=caption,
             parse_mode="HTML",
