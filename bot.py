@@ -137,7 +137,9 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         # Fetch all wallet data
+        logger.info(f"Fetching wallet data for {wallet}")
         data = await get_wallet_data(wallet)
+        logger.info(f"Wallet data: balance={data.get('balance')}, usd={data.get('usd_value')}")
 
         # Check if they actually hold any tokens
         if data["balance"] is None:
@@ -154,7 +156,9 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         # Generate the card
+        logger.info("Generating flex card image...")
         card_image = generate_flex_card(data)
+        logger.info(f"Card generated, size={card_image.getbuffer().nbytes} bytes")
 
         # Build caption
         caption = (
@@ -165,21 +169,29 @@ async def flex_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         # Delete the "generating" message
-        await status_msg.delete()
+        try:
+            await status_msg.delete()
+        except Exception:
+            pass  # Might not have permission to delete
 
         # Send the flex card
+        logger.info("Sending photo to Telegram...")
         await message.reply_photo(
             photo=InputFile(card_image, filename="bert_flex_card.png"),
             caption=caption,
             parse_mode="HTML",
         )
+        logger.info("Photo sent successfully!")
 
     except Exception as e:
         logger.error(f"Flex card error: {e}", exc_info=True)
-        await status_msg.edit_text(
-            "❌ Something went wrong generating your flex card.\n"
-            "The Solana RPC might be rate-limited. Try again in a minute!"
-        )
+        try:
+            await status_msg.edit_text(
+                f"❌ Something went wrong generating your flex card.\n"
+                f"Error: {str(e)[:200]}"
+            )
+        except Exception:
+            pass
 
 
 async def handle_error(update: Update, context: ContextTypes.DEFAULT_TYPE):

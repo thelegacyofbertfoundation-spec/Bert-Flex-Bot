@@ -35,25 +35,50 @@ MASCOT_PATH = os.path.join(SCRIPT_DIR, "assets", "cyberbert.png")
 
 
 def _font(size, style="bold"):
-    """Load Poppins or Liberation Mono fonts."""
+    """Load fonts with extensive fallbacks for different environments."""
     paths = {
-        "bold": "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
-        "medium": "/usr/share/fonts/truetype/google-fonts/Poppins-Medium.ttf",
-        "regular": "/usr/share/fonts/truetype/google-fonts/Poppins-Regular.ttf",
-        "light": "/usr/share/fonts/truetype/google-fonts/Poppins-Light.ttf",
-        "mono": "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
-        "mono_bold": "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf",
+        "bold": [
+            "/usr/share/fonts/truetype/google-fonts/Poppins-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "C:/Windows/Fonts/segoeuib.ttf",
+            "C:/Windows/Fonts/arialbd.ttf",
+        ],
+        "medium": [
+            "/usr/share/fonts/truetype/google-fonts/Poppins-Medium.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "C:/Windows/Fonts/segoeui.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ],
+        "regular": [
+            "/usr/share/fonts/truetype/google-fonts/Poppins-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "C:/Windows/Fonts/segoeui.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ],
+        "light": [
+            "/usr/share/fonts/truetype/google-fonts/Poppins-Light.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-ExtraLight.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "C:/Windows/Fonts/segoeuil.ttf",
+            "C:/Windows/Fonts/arial.ttf",
+        ],
+        "mono": [
+            "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf",
+            "C:/Windows/Fonts/consola.ttf",
+            "C:/Windows/Fonts/cour.ttf",
+        ],
+        "mono_bold": [
+            "/usr/share/fonts/truetype/liberation/LiberationMono-Bold.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf",
+            "C:/Windows/Fonts/consolab.ttf",
+            "C:/Windows/Fonts/courbd.ttf",
+        ],
     }
-    # Try primary paths, then fallback for Windows
-    primary = paths.get(style, paths["bold"])
-    fallbacks = [
-        primary,
-        # Windows fallbacks
-        "C:/Windows/Fonts/segoeui.ttf" if "regular" in style or "light" in style else "C:/Windows/Fonts/segoeuib.ttf",
-        "C:/Windows/Fonts/consola.ttf" if "mono" in style else "C:/Windows/Fonts/segoeuib.ttf",
-        "C:/Windows/Fonts/arial.ttf",
-    ]
-    for path in fallbacks:
+    for path in paths.get(style, paths["bold"]):
         try:
             return ImageFont.truetype(path, size)
         except (OSError, IOError):
